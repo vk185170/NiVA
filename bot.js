@@ -39,7 +39,7 @@ class NiVA extends ActivityHandler {
 
                 // If no answers were returned from QnA Maker, reply with help.
                 } else {
-                    await context.sendActivity('No QnA Maker answers were found.');
+                    await context.sendActivity('That may be beyond my abilities at the moment.');
                 }
             }
 
