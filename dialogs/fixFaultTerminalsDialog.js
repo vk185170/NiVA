@@ -66,12 +66,12 @@ class FixFaultTerminalsDialog extends ComponentDialog {
             // Running a prompt here means the next WaterfallStep will be run when the user's response is received.
             await step.context.sendActivity('I see that you are from PNC, Paris, Central Zone.');
             return await step.prompt(CHOICE_PROMPT, {
-                prompt: 'Here are some of your ATMs that needs attention..',
-                choices: ChoiceFactory.toChoices(['Terminal 2613', 'Terminal 2231', 'Terminal 3234', 'Terminal 4234'])
+                prompt: 'Here are some of your ATMs that needs immediate attention!',
+                choices: ChoiceFactory.toChoices(['Paris Central 2613', 'Paris Downtown 2231', 'Paris Rivera 3234', 'Paris Airport 4234'])
             });
         } else {
             await step.context.sendActivity(`I see there's a Cash Dispenser issue with your ${step.values.terminal}`);
-            return await step.prompt(CONFIRM_PROMPT, 'Do you want any help in fixing it?', ['Yes', 'No']);
+            return await step.prompt(CONFIRM_PROMPT, 'Do you want any assistance in fixing it from my side?', ['Yes', 'No']);
         }
     }
 
@@ -87,39 +87,40 @@ class FixFaultTerminalsDialog extends ComponentDialog {
 
     async terminalHelpStep(step) {
         if (!step.result) {
-            return step.prompt(CONFIRM_PROMPT, 'Do you want to connect to our support team? ', ['Yes', 'No']);
+            return step.prompt(CONFIRM_PROMPT, 'Do you want me to connect you to one of our support executive? ', ['Yes', 'No']);
         }
         else {
             endDialog = true;
-            await step.context.sendActivity('Thanks for contacting, Have a great day ahead!');
+            await step.context.sendActivity('Hope we have made a difference today or was able to answer your queries. Thanks for talking to me! I look forward to your feedback and ratings.');
             return await step.endDialog();
         }
     }
 
     async getSupportStep(step) {
         if (step.result) {
-            await step.context.sendActivity('Connecting to the live agent..');
-            await delay(500);
+            await step.context.sendActivity(`Connecting to the live agent..`);
+            await delay(5000);
             await step.context.sendActivity('All support executives are busy at the moment!');
-            await step.context.sendActivity('I have created an Support Request for you - #REQ1232445');
-            return await step.prompt(CONFIRM_PROMPT, 'Do you want to send an email?', ['yes', 'no']);
+            await step.context.sendActivity('I have created a support request for you - #REQ1232445');
+            return await step.prompt(CONFIRM_PROMPT, 'Do you want to connect with the assigned support executive over email?', ['yes', 'no']);
         }
         else {
             endDialog = true;
-            await step.context.sendActivity('Thanks for contacting, Have a great day ahead!');
+            await step.context.sendActivity('Ok, I understand, you want to fix it yourself. 🙂');
+            await step.context.sendActivity('Hope we have made a difference today or was able to answer your queries. Thanks for talking to me! I look forward to your feedback and ratings.');
             return await step.endDialog();
         }
     }
 
     async confirmEmailStep(step) {
         if ((step.result)) {
-            await step.context.sendActivity('Email sent!')
-            await step.context.sendActivity('Ok, I understand, you want to fix yourself. I just want to remind you that the SLA for this incident is ___ hrs. and should be resolved by HH:MM:SS');
+            await step.context.sendActivity('Wohoo! We\'ve sent an email copying you to the concerned support executive, to expedite.')
+            await step.context.sendActivity('I just want to inform you that the SLA for this incident is 12 hrs. and it\'ll be resolved by 01:30:00');
             endDialog = true;
             return await step.endDialog();
         }
         else {
-            await step.context.sendActivity('Thanks for contacting, Have a great day ahead!');
+            await step.context.sendActivity('Hope we have made a difference today or was able to answer your queries. Thanks for talking to me! I look forward to your feedback and ratings.');
             endDialog = true;
             return await step.endDialog();
         }

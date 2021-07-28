@@ -31,7 +31,7 @@ class CreateIncidentDialog extends ComponentDialog {
 
 
             this.promptforterminalstep.bind(this),
-            this.promptforfaulttypestep.bind(this),
+            this.promptforfaultTypestep.bind(this),
             this.createincidentstep.bind(this)
 
         ]));
@@ -63,18 +63,18 @@ class CreateIncidentDialog extends ComponentDialog {
         if (step.values.terminalName==undefined) {
             // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is a Prompt Dialog.
             // Running a prompt here means the next WaterfallStep will be run when the user's response is received.
-            return await step.prompt(TEXT_PROMPT, 'Please enter terminal on which we need to create incident');
+            return await step.prompt(TEXT_PROMPT, 'For which terminal do you want me to raise an incident?');
              
         } else{
             return await step.next(step.values.terminalName)            
         }
     }
 
-    async promptforfaulttypestep(step) {
+    async promptforfaultTypestep(step) {
         endDialog=false;
         step.values.faultType = step._info.options.Fault_Type;
         if(step.values.faultType==undefined)  {
-            return await step.prompt(TEXT_PROMPT, 'Please enter status code for which we need create an incident');   
+            return await step.prompt(TEXT_PROMPT, 'Please type a bit about the issue (status code if you know) for which you want to raise an incident.');   
         } else{
             return await step.next(step.values.faultType)            
         }
@@ -82,7 +82,7 @@ class CreateIncidentDialog extends ComponentDialog {
 
     async createincidentstep(step) {
             endDialog=true;
-            await step.context.sendActivity(`INC2000318 created sucessfully!`)
+            await step.context.sendActivity(`INC2000318 is created sucessfully!`)
             return await step.endDialog();
      
     }

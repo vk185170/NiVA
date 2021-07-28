@@ -61,8 +61,8 @@ class FeedbackDialog extends ComponentDialog {
         console.log("feedback recieved");
         endDialog = true;
         // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is a Prompt Dialog.
-        await step.context.sendActivity('Thanks for your amazing and valuable suggestion.');
-        await step.context.sendActivity('We have sent it over our hotline to the concerned teams and I assure you that this will get added to the to-do-list of our Engineering and product teams.')
+        await step.context.sendActivity('Thanks for your amazing and valuable suggestion!');
+        await step.context.sendActivity('We\'ve sent it over our hotline to the concerned teams and after required vetting it will get added to the to-do-list of our Engineering and Product teams.')
         return await step.endDialog();
     }
 
