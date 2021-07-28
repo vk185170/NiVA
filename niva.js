@@ -70,7 +70,7 @@ class NiVA extends ActivityHandler {
         const { activity } = context;
         for (const idx in activity.membersAdded) {
             if (activity.membersAdded[idx].id !== context.activity.recipient.id) {
-                const welcomeText = 'Hello and welcome to NiVA!';
+                const welcomeText = 'Hello!👋 Welcome to NiVA(NCR\'s interactive Virtual Assistant)';
                 await context.sendActivity(welcomeText);
                 await this.sendSuggestedActions(context);
             }
