@@ -32,7 +32,9 @@ class CreateTerminalDialog extends ComponentDialog {
 
             
 
-        this.createTerminalNameStep.bind(this),
+        this.newTerminal.bind(this),
+        this.newTerminalSummaryStep.bind(this)
+       // this.terminalCreateSummaryStep.bind(this)
         // this.selectTerminalStep.bind(this),
         // this.confirmEmailStep.bind(this)
 
@@ -57,86 +59,25 @@ class CreateTerminalDialog extends ComponentDialog {
         }
     }
 
-    async createTerminalNameStep(step) {
-        endDialog = false;
-        step.values.product = step._info.options.product;
-        // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is a Prompt Dialog.
-        // Running a prompt here means the next WaterfallStep will be run when the user's response is received.
-        process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
-        https.get('https://153.71.46.90/cxp-core-webapp/services/security/rest/authentication/login', (resp) => {
-            let data = '';
-          
-            // A chunk of data has been received.
-            resp.on('data', (chunk) => {
-              data += chunk;
-              console.log(data);
-            });
-          
-            // The whole response has been received. Print out the result.
-            resp.on('end', () => {
-              console.log(JSON.parse(data).explanation);
-            });
-          
-          }).on("error", (err) => {
-            console.log("Error: " + err.message);
-          });
-        return await step.prompt(NAME_PROMPT, 'Please enter the terminal name.');
+    async newTerminal(step) {
+        step.values.transport = step._info.options.Terminal_Name;
+        console.log(step.values.transport);
+        if(step.values.transport == undefined){
+            return await step.prompt(NAME_PROMPT, 'Please enter the terminal Name.');}
+        else{
+            return await step.next(step.values.transport)            
+        }
     }
 
-    async selectTerminalStep(step) {
-        step.values.product = step.result.value;
+    async newTerminalSummaryStep(step) {
+        step.values.name = step.result;
+        await step.context.sendActivity(`Terminal Name: ${ step.result }.`);
+        await step.context.sendActivity('IP Address: 192.168.123.1');
+        await step.context.sendActivity('Zone: Atlanta');
+        endDialog = true;
+        return step.endDialog();
+    }
 
-            await step.context.sendActivity("I see that this Terminal has d<Issue Code/Status coe> and Need <Action> based on <Action code> ");
-            return await step.prompt(CHOICE_PROMPT, {
-                prompt: 'Do you want me to help you how to fix it?.',
-                choices: ChoiceFactory.toChoices(['yes', 'no'])
-            });
-        }
-    
-        async terminalHelpStep(step) {
-            step.values.terminalSelfFixConfirmation = step.result.value;
-            if (step.values.terminalSelfFixConfirmation === true) {
-                await step.context.sendActivity("Here is the Manual for Replenishing the Activate Terminal");
-                return await step.prompt(CHOICE_PROMPT, {
-                    prompt: 'Let me know if it helps..',
-                    choices: ChoiceFactory.toChoices(['yes', 'no'])
-                });
-            }
-            else {
-                endDialog = true;
-                return await step.context.sendActivity('Okay, Is there anything you want me help?');
-            }
-        }
-    
-        async getSupportStep(step) {
-            step.values.connectToSupport = step.result.value;
-            if (step.values.connectToSupport === true) {
-                await step.context.sendActivity('All support executives are busy right now..');
-                await step.context.sendActivity('I have created an Support Request for you - #REQ1232445');
-                return await step.prompt(CHOICE_PROMPT, {
-                    prompt: 'Do you want to send an email?',
-                    choices: ChoiceFactory.toChoices(['yes', 'no'])
-                });
-            }
-            else {
-                return await step.context.sendActivity('Thanks for contacting, Have a great day ahead!')
-            }
-        }
-    
-        async confirmEmailStep(step) {
-            step.values.email = step.result.value;
-            if (step.values.email) {
-                await step.context.sendActivity('Email sent!')
-                await step.context.sendActivity('Ok, I understand, you want to fix yourself. I just want to remind you that the SLA for this incident is ___ hrs. and should be resolved by HH:MM:SS');
-                endDialog = true;
-                return await step.endDialog();
-            }
-            else {
-                await step.context.sendActivity('Thanks for contacting, Have a great day ahead!');
-                endDialog = true;
-                return await step.endDialog();
-            }
-        }
 
     async isDialogComplete(){
         return endDialog;
