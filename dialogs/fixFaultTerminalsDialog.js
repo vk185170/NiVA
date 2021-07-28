@@ -84,9 +84,7 @@ class FixFaultTerminalsDialog extends ComponentDialog {
         if (step.result) {
             await step.context.sendActivity({ attachments: [this.createThumbnailCard()] });
         }
-        if (step.values.terminal == 'Terminal 2613'){
-            await step.context.sendActivity({ attachments: [this.createThumbnailCard()] });
-        } else  {
+        else  {
             await step.context.sendActivity({ attachments: [this.createVideoCard()] });
         }
         return await step.prompt(CONFIRM_PROMPT, 'Let me know if the this helped you.', ['Yes', 'No']);

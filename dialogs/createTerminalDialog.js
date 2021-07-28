@@ -1,5 +1,4 @@
 const {
-    ChoiceFactory,
     ChoicePrompt,
     ComponentDialog,
     ConfirmPrompt,
@@ -8,8 +7,6 @@ const {
     DialogTurnStatus,
     WaterfallDialog
 } = require('botbuilder-dialogs');
-
-const https = require('https');
 
 const CHOICE_PROMPT = 'CHOICE_PROMPT';
 const CONFIRM_PROMPT = 'CONFIRM_PROMPT';
@@ -60,17 +57,18 @@ class CreateTerminalDialog extends ComponentDialog {
     }
 
     async newTerminal(step) {
-        step.values.transport = step._info.options.Terminal_Name;
-        console.log(step.values.transport);
-        if(step.values.transport == undefined){
+        step.values.terminal = step._info.options.Terminal_Name;
+        console.log(step.values.terminal);
+        if(step.values.terminal == undefined){
             return await step.prompt(NAME_PROMPT, 'Please enter the terminal Name.');}
         else{
-            return await step.next(step.values.transport)            
+            return await step.next(step.values.terminal)            
         }
     }
 
     async newTerminalSummaryStep(step) {
         step.values.name = step.result;
+        await step.context.sendActivity('New Terminal has been created');
         await step.context.sendActivity(`Terminal Name: ${ step.result }.`);
         await step.context.sendActivity('IP Address: 192.168.123.1');
         await step.context.sendActivity('Zone: Atlanta');

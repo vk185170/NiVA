@@ -1,8 +1,9 @@
-const { ActivityHandler, MessageFactory } = require('botbuilder');
+const { ActivityHandler, MessageFactory, CardFactory } = require('botbuilder');
 const { FixFaultTerminalsDialog } = require('./dialogs/fixFaultTerminalsDialog');
 const { IMSupportDialog } = require('./dialogs/imSupportDialog');
 const { FeedbackDialog } = require('./dialogs/feedbackDialog');
 const { CreateTerminalDialog } = require('./dialogs/createTerminalDialog');
+const { CreateIncidentDialog } = require('./dialogs/createIncidentDialog');
 const { LuisRecognizer, QnAMaker } = require('botbuilder-ai');
 
 class NiVA extends ActivityHandler {
@@ -18,7 +19,8 @@ class NiVA extends ActivityHandler {
         this.fixFaultTerminalsDialog = new FixFaultTerminalsDialog(this.conversationState, this.userState);
         this.imSupportDialog = new IMSupportDialog(this.conversationState, this.userState);
         this.feebackDialog = new FeedbackDialog(this.conversationState, this.userState);
-        this.CreateTerminalDialog = new CreateTerminalDialog(this.conversationState, this.userState);
+        this.createTerminalDialog = new CreateTerminalDialog(this.conversationState, this.userState);
+        this.createIncidentDialog = new CreateIncidentDialog(this.conversationState, this.userState);
 
         this.previousIntent = this.conversationState.createProperty("previousIntent");
         this.conversationData = this.conversationState.createProperty("conversationData");
@@ -88,7 +90,7 @@ class NiVA extends ActivityHandler {
             currentIntent = previousIntent.intentName;
         } else if (previousIntent.intentName && conversationData.endDialog) {
             currentIntent = intent;
-        } else if(intent == 'None' && !previousIntent.intentName) {
+        } else if (intent == 'None' && !previousIntent.intentName) {
             await this.processFromKnowledgeBase(context);
         } else {
             currentIntent = intent;
@@ -116,34 +118,78 @@ class NiVA extends ActivityHandler {
                     await this.sendSuggestedActions(context);
                 }
                 break;
-                case 'Feedback':
-                    console.log("Inside <Feedback> intent");
-                    // TODO
-                    await this.conversationData.set(context, { endDialog: false });
-                    await this.feebackDialog.run(context, this.dialogState, entities);
-                    this.conversationState.endDialog = await this.feebackDialog.isDialogComplete();
-                    if (this.conversationState.endDialog) {
-                        await this.previousIntent.set(context, { intentName: null });
-                        await this.sendSuggestedActions(context);
-                    }
-                    break;
-                case 'Create_Terminal':
-                    console.log("Inside <Create Terminal> intent");
-                    // TODO
-                    await this.conversationData.set(context, { endDialog: false });
-                    await this.CreateTerminalDialog.run(context, this.dialogState, entities);
-                    this.conversationState.endDialog = await this.CreateTerminalDialog.isDialogComplete();
-                    if (this.conversationState.endDialog) {
-                        await this.previousIntent.set(context, { intentName: null });
-                        await this.sendSuggestedActions(context);
-                    }
-                    break;
-                case 'Question':
-                    console.log("Inside <Question> intent");
-                    // TODO
-                    await context.sendActivity('Please type your question.');
+            case 'Feedback':
+                console.log("Inside <Feedback> intent");
+                // TODO
+                await this.conversationData.set(context, { endDialog: false });
+                await this.feebackDialog.run(context, this.dialogState, entities);
+                this.conversationState.endDialog = await this.feebackDialog.isDialogComplete();
+                if (this.conversationState.endDialog) {
                     await this.previousIntent.set(context, { intentName: null });
-                    break;
+                    await this.sendSuggestedActions(context);
+                }
+                break;
+            case 'Create_Terminal':
+                console.log("Inside <Create Terminal> intent");
+                await this.conversationData.set(context, { endDialog: false });
+                await this.createTerminalDialog.run(context, this.dialogState, entities);
+                this.conversationState.endDialog = await this.createTerminalDialog.isDialogComplete();
+                if (this.conversationState.endDialog) {
+                    await this.previousIntent.set(context, { intentName: null });
+                    await this.sendSuggestedActions(context);
+                }
+                break;
+            case 'Create_Incident':
+
+                console.log("Inside <Create incident> intent");
+
+                // TODO
+
+                await this.conversationData.set(context, { endDialog: false });
+
+                await this.createIncidentDialog.run(context, this.dialogState, entities);
+
+                this.conversationState.endDialog = await this.createIncidentDialog.isDialogComplete();
+
+                if (this.conversationState.endDialog) {
+
+                    await this.previousIntent.set(context, { intentName: null });
+
+                    await this.sendSuggestedActions(context);
+
+                }
+
+                break;
+            case 'Find_Terminal':
+                console.log("Inside <Find Terminal> intent");
+                // console.log(entities.Terminal[0][0]);
+                var terminalType;
+                if (entities.Terminal) {
+                    terminalType = entities.Terminal[0][0];
+                } else {
+                    terminalType = null;
+                }
+                // var terminalType = entities.Terminal[0][0] ? entities.Terminal[0][0] : null;
+                console.log(terminalType);
+                if (terminalType == 'Out of Service') {
+                    await context.sendActivity({ attachments: [this.getOutOfServiceTerminals()] });
+                } else if (terminalType == 'In service') {
+                    await context.sendActivity({ attachments: [this.getInserviceTerminals()] });
+                } else if (terminalType == 'Needs Attention') {
+                    await context.sendActivity({ attachments: [this.getNeedsAttentionTerminals()] });
+                } else if (terminalType == 'Lost Communication') {
+                    await context.sendActivity({ attachments: [this.getLostCommunicationTerminals()] });
+                } else {
+                    await context.sendActivity({ attachments: [this.getAllTerminals()] });
+                }
+                await this.previousIntent.set(context, { intentName: null });
+                await this.sendSuggestedActions(context);
+                break;
+            case 'Question':
+                console.log("Inside <Question> intent");
+                await context.sendActivity('Please type your question.');
+                await this.previousIntent.set(context, { intentName: null });
+                break;
         }
     }
 
@@ -152,10 +198,420 @@ class NiVA extends ActivityHandler {
         const results = await this.qnaMaker.getAnswers(context);
 
         if (results.length > 0) {
-            await context.sendActivity(`${ results[0].answer }`);
+            await context.sendActivity(`${results[0].answer}`);
         } else {
             await context.sendActivity('That may be beyond my abilities at the moment.');
         }
+    }
+
+
+    getLostCommunicationTerminals() {
+        return CardFactory.adaptiveCard({
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "type": "AdaptiveCard",
+            "version": "1.0",
+            "body": [
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Terminal Name"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2671"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2412"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2222"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL4212"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Location"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "London"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Paris"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Dundee"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Halifax"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+
+    }
+
+
+    getInserviceTerminals() {
+        return CardFactory.adaptiveCard({
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "type": "AdaptiveCard",
+            "version": "1.0",
+            "body": [
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Terminal Name"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2671"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2412"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2222"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL4212"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Location"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "London"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Paris"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Dundee"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Halifax"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+
+    }
+
+    getOutOfServiceTerminals() {
+        return CardFactory.adaptiveCard({
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "type": "AdaptiveCard",
+            "version": "1.0",
+            "body": [
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Terminal Name"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2671"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2412"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2222"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL4212"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Status"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Out of Service"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Out of Service"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Out of Service"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Out of Service"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Description"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Low Cash Unit"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Loss Comm"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Paper Jammed"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Open Device Fault"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+
+    }
+
+    getNeedsAttentionTerminals() {
+        return CardFactory.adaptiveCard({
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "type": "AdaptiveCard",
+            "version": "1.0",
+            "body": [
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Terminal Name"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2671"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2412"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2222"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL4212"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Description"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Low Cash Unit"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Paper Jammed"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Paper Jammed"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Low Cash"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+
+    }
+
+    getAllTerminals() {
+        return CardFactory.adaptiveCard({
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "type": "AdaptiveCard",
+            "version": "1.0",
+            "body": [
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Terminal Name"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2671"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2412"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2222"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL4212"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Status"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "In Service"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Needs Attention"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Out of Service"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Lost Communication"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Description"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "NA"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Cash Low"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Power Failed"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Connection issue"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+
     }
 }
 
