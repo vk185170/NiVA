@@ -70,24 +70,19 @@ class FixFaultTerminalsDialog extends ComponentDialog {
                 choices: ChoiceFactory.toChoices(['Terminal 2613', 'Terminal 2231', 'Terminal 3234', 'Terminal 4234'])
             });
         } else {
-            await step.context.sendActivity(`I see there's a Cash Dispenser issue with your ${step.values.terminal}`)
+            await step.context.sendActivity(`I see there's a Cash Dispenser issue with your ${step.values.terminal}`);
             return await step.prompt(CONFIRM_PROMPT, 'Do you want any help in fixing it?', ['Yes', 'No']);
         }
     }
 
     async selectTerminalStep(step) {
         step.values.terminal = step.result.value;
-        // await step.context.sendActivity(`Here is how you can fix ${step.values.terminal}`);
-        // await step.context.sendActivity('Please go through this article');
-        // var link = 'https://study.com/articles/ATM_Repair_Course_and_Training_Information.html';
-        // await step.context.sendActivity(link)
+        await step.context.sendActivity(`I see there's a Cash Dispenser issue with your ${step.values.terminal}`);
         if (step.result) {
-            await step.context.sendActivity({ attachments: [this.createThumbnailCard()] });
-        }
-        else  {
             await step.context.sendActivity({ attachments: [this.createVideoCard()] });
+            await step.context.sendActivity({ attachments: [this.createThumbnailCard()]});
         }
-        return await step.prompt(CONFIRM_PROMPT, 'Let me know if the this helped you.', ['Yes', 'No']);
+        return await step.prompt(CONFIRM_PROMPT, 'Let me know if these helped you.', ['Yes', 'No']);
     }
 
     async terminalHelpStep(step) {
@@ -96,7 +91,7 @@ class FixFaultTerminalsDialog extends ComponentDialog {
         }
         else {
             endDialog = true;
-            await step.context.sendActivity('Thanks for contacting, Have a great day ahead');
+            await step.context.sendActivity('Thanks for contacting, Have a great day ahead!');
             return await step.endDialog();
         }
     }

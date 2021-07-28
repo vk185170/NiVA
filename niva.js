@@ -1,4 +1,4 @@
-const { ActivityHandler, MessageFactory, CardFactory } = require('botbuilder');
+const { ActivityHandler, ActionTypes, CardFactory } = require('botbuilder');
 const { FixFaultTerminalsDialog } = require('./dialogs/fixFaultTerminalsDialog');
 const { IMSupportDialog } = require('./dialogs/imSupportDialog');
 const { FeedbackDialog } = require('./dialogs/feedbackDialog');
@@ -78,9 +78,48 @@ class NiVA extends ActivityHandler {
     }
 
     async sendSuggestedActions(context) {
-        var suggestions = MessageFactory.suggestedActions(['Incident Management Support', 'Fix Terminal Faults', 'Create a new Terminal', 'I have some Questions', 'I have some Feedback'], 'How may I enlighten your day with?');
-        await context.sendActivity(suggestions);
+        const card = CardFactory.heroCard(
+            'How may I enlighten your day with?',
+            [],
+            [
+                {
+                    type: ActionTypes.ImBack,
+                    title: 'Fix Terminal Faults',
+                    value: 'Fix Terminal Faults'
+                },
+                {
+                    type: ActionTypes.ImBack,
+                    title: 'Create a new Terminal',
+                    value: 'Create a new Terminal'
+                },
+                ,
+                {
+                    type: ActionTypes.ImBack,
+                    title: 'Create Incident',
+                    value: 'Create Incident'
+                },
+                {
+                    type: ActionTypes.ImBack,
+                    title: 'Incident Management Support',
+                    value: 'Incident Management Support'
+                },
+                {
+                    type: ActionTypes.ImBack,
+                    title: 'I have some Questions',
+                    value: 'I have some Questions'
+                },
+                {
+                    type: ActionTypes.ImBack,
+                    title: 'I have some Feedback',
+                    value: 'I have some Feedback'
+                }
+
+            ]
+        );
+
+        await context.sendActivity({ attachments: [card] });
     }
+
 
     async dispatchToIntentAsync(context, intent, entities) {
         var currentIntent = '';
@@ -172,16 +211,28 @@ class NiVA extends ActivityHandler {
                 // var terminalType = entities.Terminal[0][0] ? entities.Terminal[0][0] : null;
                 console.log(terminalType);
                 if (terminalType == 'Out of Service') {
+                    await context.sendActivity('Fetching the details..');
                     await context.sendActivity({ attachments: [this.getOutOfServiceTerminals()] });
                 } else if (terminalType == 'In service') {
+                    await context.sendActivity('Fetching the details..');
                     await context.sendActivity({ attachments: [this.getInserviceTerminals()] });
                 } else if (terminalType == 'Needs Attention') {
+                    await context.sendActivity('Fetching the details..');
                     await context.sendActivity({ attachments: [this.getNeedsAttentionTerminals()] });
                 } else if (terminalType == 'Lost Communication') {
+                    await context.sendActivity('Fetching the details..');
                     await context.sendActivity({ attachments: [this.getLostCommunicationTerminals()] });
                 } else {
+                    await context.sendActivity('Fetching the details..');
                     await context.sendActivity({ attachments: [this.getAllTerminals()] });
                 }
+                await this.previousIntent.set(context, { intentName: null });
+                await this.sendSuggestedActions(context);
+                break;
+            case 'Find_Incident':
+                console.log("Inside <Find Incident> intent");
+                await context.sendActivity('Fetching the details..');
+                await context.sendActivity({ attachments: [this.getAllOpenTickets()] });
                 await this.previousIntent.set(context, { intentName: null });
                 await this.sendSuggestedActions(context);
                 break;
@@ -612,6 +663,104 @@ class NiVA extends ActivityHandler {
             ]
         });
 
+    }
+
+    getAllOpenTickets() {
+        return CardFactory.adaptiveCard({
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "type": "AdaptiveCard",
+            "version": "1.0",
+            "body": [
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Incident ID"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "INC123234"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "INC123452"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "INC122222"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "INC152322"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Description"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Low Cash Unit"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Loss Comm"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Paper Jammed"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "Open Device Fault"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "weight": "bolder",
+                                    "text": "Terminal Name"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2671"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2412"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL2222"
+                                }, {
+                                    "type": "TextBlock",
+                                    "separator": true,
+                                    "text": "TERMINAL4212"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+        );
     }
 }
 
