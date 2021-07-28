@@ -5,13 +5,14 @@ const {
     ConfirmPrompt,
     DialogSet,
     DialogTurnStatus,
+    TextPrompt,
     WaterfallDialog
 } = require('botbuilder-dialogs');
 
 const CHOICE_PROMPT = 'CHOICE_PROMPT';
 const CONFIRM_PROMPT = 'CONFIRM_PROMPT';
 const WATERFALL_DIALOG = 'WATERFALL_DIALOG';
-
+const FEEDBACK_PROMPT = 'FEEDBACK_PROMPT';
 var endDialog;
 
 class IMSupportDialog extends ComponentDialog {
@@ -20,7 +21,7 @@ class IMSupportDialog extends ComponentDialog {
 
         this.conversationState = conversationState;
         this.conversationData = conversationData;
-
+        this.addDialog(new TextPrompt(FEEDBACK_PROMPT));
         this.addDialog(new ChoicePrompt(CHOICE_PROMPT));
         this.addDialog(new ConfirmPrompt(CONFIRM_PROMPT));
         this.addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
@@ -28,10 +29,10 @@ class IMSupportDialog extends ComponentDialog {
             
 
         this.productCategoryStep.bind(this),
-        this.selectTerminalStep.bind(this),
-        this.confirmationStepForTerminalHelp.bind(this),
-        this.connectToSupportCall.bind(this),
-        this.confirmEmailStep.bind(this)
+        this.HelpWithProductCategoryStep.bind(this),
+        this.confirmProductCategoryStep.bind(this),
+        this.queryStep.bind(this),
+        this.suggestionStep.bind(this)
 
         ]));
         this.initialDialogId = WATERFALL_DIALOG;
@@ -65,64 +66,55 @@ class IMSupportDialog extends ComponentDialog {
         });
     }
 
-    async selectTerminalStep(step) {
+    async HelpWithProductCategoryStep(step) {
         step.values.product = step.result.value;
-        if (!step.valuesproduct) {
-            await step.context.sendActivity("I see that this Terminal has d<Issue Code/Status coe> and Need <Action> based on <Action code> ");
+        if(step.values.product === 'Vision'){
             return await step.prompt(CHOICE_PROMPT, {
-                prompt: 'Do you want me to help you how to fix it?.',
-                choices: ChoiceFactory.toChoices(['yes', 'no'])
+                prompt: 'I am happy to help you with Vision, Please let us know which version of Vision you are using?',
+                choices: ChoiceFactory.toChoices(['Vision 2x', 'Vision 3x','Vision 4x'])
             });
         }
-    }
-
-    async confirmationStepForTerminalHelp(step) {
-        step.values.terminalSelfFixConfirmation = step.result.value;
-        if (step.values.terminalSelfFixConfirmation === true) {
-            await step.context.sendActivity("Here is the Manual for Replenishing the Activate Terminal");
-            return await step.prompt(CHOICE_PROMPT, {
-                prompt: 'Let me know if it helps..',
-                choices: ChoiceFactory.toChoices(['yes', 'no'])
-            });
-        }
-        else {
-            endDialog = true;
-            return await step.context.sendActivity('Okay, Is there anything you want me help?');
-        }
-    }
-
-    async connectToSupportCall(step) {
-        step.values.connectToSupport = step.result.value;
-        if (step.values.connectToSupport === true) {
-            await step.context.sendActivity('All support executives are busy right now..');
-            await step.context.sendActivity('I have created an Support Request for you - #REQ1232445');
-            return await step.prompt(CHOICE_PROMPT, {
-                prompt: 'Do you want to send an email?',
-                choices: ChoiceFactory.toChoices(['yes', 'no'])
-            });
-        }
-        else {
-            return await step.context.sendActivity('Thanks for contacting, Have a great day ahead!')
-        }
-    }
-
-    async confirmEmailStep(step) {
-        step.values.email = step.result.value;
-        if (step.values.email) {
-            await step.context.sendActivity('Email sent!')
-            await step.context.sendActivity('Ok, I understand, you want to fix yourself. I just want to remind you that the SLA for this incident is ___ hrs. and should be resolved by HH:MM:SS');
-            endDialog = true;
-            return await step.endDialog();
-        }
-        else {
-            await step.context.sendActivity('Thanks for contacting, Have a great day ahead!');
-            endDialog = true;
+        else if(step.values.product==='Active Enterprise'||step.values.product==='MESH'||step.values.product==='EPSS'||step.values.product==='UA'){
+            await step.context.sendActivity('Currently we are brewing up our AI capabilites to support this area. Please revisit after sometime or key in your email ID so we can keep you posted. ')
+            endDialog = true
             return await step.endDialog();
         }
     }
+        async confirmProductCategoryStep(step){
+            step.values.version = step.result.value;
+            if(step.values.version[0]==='V'){
+                if(step.values.version === 'Vision 2x' || step.values.version === 'Vision 3x'){
+                    await step.context.sendActivity('Oh! Have you ever thought of upgrading to Vision 4.x. I am sure a lot of such issues wont be there.')
+                    endDialog = true
+                    return await step.endDialog();
+                }
+                else{
+                    return await step.prompt(CHOICE_PROMPT, {
+                        prompt: 'Sorry to hear that you are facing issue with Vision 4.x. Kindly choose among the below areas where you are facing issue',
+                        choices: ChoiceFactory.toChoices(['IM', 'EJ','SD','UA','MS'])
+                    });
+
+                }
+            }
+            else{
+                await step.context.sendActivity('Thank you for contacting us');
+                return await step.endDialog();
+            }
+        }
+        async queryStep(step) {
+            step.values.product =  step.result.value;
+            return await step.prompt(FEEDBACK_PROMPT, `Please share the details of the issue you are facing with ${step.values.product}`);
+        }
+        async suggestionStep(step){
+            step.values.query = step.result.value;
+            await step.context.sendActivity('We have sent it over our hotline to the concerned team');
+            endDialog = true;
+            return await step.endDialog();
+        }
+        
 
     async isDialogComplete(){
-        return endDialog;
+        return endDialog; //
     }
 }
 

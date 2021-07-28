@@ -1,6 +1,7 @@
 const { ActivityHandler, MessageFactory } = require('botbuilder');
 const { FixFaultTerminalsDialog } = require('./dialogs/fixFaultTerminalsDialog');
 const { IMSupportDialog } = require('./dialogs/imSupportDialog');
+const { FeedbackDialog } = require('./dialogs/feedbackDialog');
 const { LuisRecognizer, QnAMaker } = require('botbuilder-ai');
 
 class NiVA extends ActivityHandler {
@@ -15,6 +16,7 @@ class NiVA extends ActivityHandler {
         // Configuring dialogs
         this.fixFaultTerminalsDialog = new FixFaultTerminalsDialog(this.conversationState, this.userState);
         this.imSupportDialog = new IMSupportDialog(this.conversationState, this.userState);
+        this.feebackDialog = new FeedbackDialog(this.conversationData,this.userState);
 
         this.previousIntent = this.conversationState.createProperty("previousIntent");
         this.conversationData = this.conversationState.createProperty("conversationData");
@@ -116,7 +118,7 @@ class NiVA extends ActivityHandler {
                     console.log("Inside <Feedback> intent");
                     // TODO
                     await this.conversationData.set(context, { endDialog: false });
-                    await this.fixFaultTerminalsDialog.run(context, this.dialogState, entities);
+                    await this.feebackDialog.run(context, this.dialogState, entities);
                     this.conversationState.endDialog = await this.feebackDialog.isDialogComplete();
                     if (this.conversationState.endDialog) {
                         await this.previousIntent.set(context, { intentName: null });

@@ -26,13 +26,13 @@ class FixFaultTerminalsDialog extends ComponentDialog {
         this.addDialog(new ConfirmPrompt(CONFIRM_PROMPT));
         this.addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
 
-            
 
-        this.listAllFaultTerminalsStep.bind(this),
-        this.selectTerminalStep.bind(this),
-        this.terminalHelpStep.bind(this),
-        this.getSupportStep.bind(this),
-        this.confirmEmailStep.bind(this)
+
+            this.listAllFaultTerminalsStep.bind(this),
+            this.selectTerminalStep.bind(this),
+            this.terminalHelpStep.bind(this),
+            this.getSupportStep.bind(this),
+            this.confirmEmailStep.bind(this)
 
         ]));
         this.initialDialogId = WATERFALL_DIALOG;
@@ -47,6 +47,7 @@ class FixFaultTerminalsDialog extends ComponentDialog {
      */
     async run(turnContext, accessor, entities) {
         const dialogSet = new DialogSet(accessor);
+        console.log(entities);
         dialogSet.add(this);
         const dialogContext = await dialogSet.createContext(turnContext);
         const results = await dialogContext.continueDialog();
@@ -57,28 +58,38 @@ class FixFaultTerminalsDialog extends ComponentDialog {
 
     async listAllFaultTerminalsStep(step) {
         endDialog = false;
-        // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is a Prompt Dialog.
-        // Running a prompt here means the next WaterfallStep will be run when the user's response is received.
-        return await step.prompt(CHOICE_PROMPT, {
-            prompt: 'Please select the terminal you want to fix',
-            choices: ChoiceFactory.toChoices(['Terminal 1', 'Terminal 2', 'Terminal 3', 'Terminal 4'])
-        });
+        step.values.terminal = step._info.options.Terminal_Name;
+        if (step.values.terminal==undefined) {
+            // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is a Prompt Dialog.
+            // Running a prompt here means the next WaterfallStep will be run when the user's response is received.
+            await step.context.sendActivity('I see that you are from PNC,Paris,Central Zone');
+            return await step.prompt(CHOICE_PROMPT, {
+                prompt: 'Here are some of your ATMs',
+                choices: ChoiceFactory.toChoices(['Terminal 2613', 'Terminal 2231', 'Terminal 3234', 'Terminal 4234'])
+            });
+        } else {
+            return await step.context.sendActivity(`I see an issue with your ${step.values.terminal}`)
+        }
     }
 
     async selectTerminalStep(step) {
         step.values.terminal = step.result.value;
-        await step.context.sendActivity("I see that this Terminal has d<Issue Code/Status coe> and Need <Action> based on <Action code> ");
-        return await step.prompt(CONFIRM_PROMPT, 'Do you want me to help you how to fix it?.', ['Yes', 'No']);
+        await step.context.sendActivity(`Here is how you can fix ${step.values.terminal}`);
+        await step.context.sendActivity('Please go through this article');
+        var link = 'https://study.com/articles/ATM_Repair_Course_and_Training_Information.html';
+        await step.context.sendActivity(link)
+        return await step.prompt(CONFIRM_PROMPT, 'Let me know if the above article helped.', ['Yes', 'No']);
     }
 
     async terminalHelpStep(step) {
-        if (step.result) {
-            await step.context.sendActivity("Here is the Manual for Replenishing the Activate Terminal");
-            return step.prompt(CONFIRM_PROMPT,  'Let me know if it helps',['Yes', 'No']);
+        if (!step.result) {
+            // await step.context.sendActivity("Do you want to connecto to our support team")
+            return step.prompt(CONFIRM_PROMPT, 'Do you want to connect to our support team? ', ['Yes', 'No']);
         }
         else {
             endDialog = true;
-            return await step.context.sendActivity('Okay, Is there anything you want me help?');
+            await step.context.sendActivity('Thanks for contacting, Have a great day ahead');
+            return await step.endDialog();
         }
     }
 
@@ -88,11 +99,12 @@ class FixFaultTerminalsDialog extends ComponentDialog {
             await delay(500);
             await step.context.sendActivity('All support executives are busy at the moment!');
             await step.context.sendActivity('I have created an Support Request for you - #REQ1232445');
-            return await step.prompt(CONFIRM_PROMPT, 'Do you want to send an email?',['yes', 'no']);
+            return await step.prompt(CONFIRM_PROMPT, 'Do you want to send an email?', ['yes', 'no']);
         }
         else {
             endDialog = true;
-            return await step.context.sendActivity('Thanks for contacting, Have a great day ahead!')
+            await step.context.sendActivity('Thanks for contacting, Have a great day ahead!');
+            return await step.endDialog();
         }
     }
 
@@ -110,7 +122,7 @@ class FixFaultTerminalsDialog extends ComponentDialog {
         }
     }
 
-    async isDialogComplete(){
+    async isDialogComplete() {
         return endDialog;
     }
 }
