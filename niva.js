@@ -1,4 +1,4 @@
-const { ActivityHandler, MessageFactory } = require('botbuilder');
+const { ActivityHandler, MessageFactory,CardFactory,ActionTypes } = require('botbuilder');
 const { FixFaultTerminalsDialog } = require('./dialogs/fixFaultTerminalsDialog');
 const { IMSupportDialog } = require('./dialogs/imSupportDialog');
 const { FeedbackDialog } = require('./dialogs/feedbackDialog');
@@ -70,7 +70,8 @@ class NiVA extends ActivityHandler {
             if (activity.membersAdded[idx].id !== context.activity.recipient.id) {
                 const welcomeText = 'Hello and welcome to NiVA!';
                 await context.sendActivity(welcomeText);
-                await this.sendSuggestedActions(context);
+             //   await this.sendSuggestedActions(context);
+                await this.sendIntroCard(context);
             }
         }
     }
@@ -79,6 +80,45 @@ class NiVA extends ActivityHandler {
         var suggestions = MessageFactory.suggestedActions(['Incident Management Support', 'Fix Terminal Faults', 'Create a new Terminal', 'I have some Questions', 'I have some Feedback'], 'How may I enlighten your day with?');
         await context.sendActivity(suggestions);
     }
+
+    //      HERO CARDS EXAMPLE
+    async sendIntroCard(context) {
+        const card = CardFactory.heroCard(
+            'How may I enlighten your day with?',
+            [],
+            [
+                {
+                    type: ActionTypes.ImBack,
+                    title: 'Incident Management Support',
+                    value: 'Incident Management Support'
+                },
+                {
+                    type: ActionTypes.ImBack,
+                    title: 'Fix Terminal Faults',
+                    value: 'Fix Terminal Faults'
+                },
+                {
+                    type: ActionTypes.ImBack,
+                    title: 'Create a new Terminal',
+                    value: 'Create a new Terminal'
+                } ,
+                {
+                    type: ActionTypes.ImBack,
+                    title: 'I have some Questions',
+                    value: 'I have some Questions'
+                },
+                {
+                    type: ActionTypes.ImBack,
+                    title: 'I have some Feedback',
+                    value: 'I have some Feedback'
+                }
+                
+            ]
+        );
+
+        await context.sendActivity({ attachments: [card] });
+    }
+  
 
     async dispatchToIntentAsync(context, intent, entities) {
         var currentIntent = '';
@@ -103,7 +143,7 @@ class NiVA extends ActivityHandler {
                 this.conversationState.endDialog = await this.fixFaultTerminalsDialog.isDialogComplete();
                 if (this.conversationState.endDialog) {
                     await this.previousIntent.set(context, { intentName: null });
-                    await this.sendSuggestedActions(context);
+                    await this.sendIntroCard(context);
                 }
                 break;
             case 'Incident_Management_Support':
@@ -113,7 +153,7 @@ class NiVA extends ActivityHandler {
                 this.conversationState.endDialog = await this.imSupportDialog.isDialogComplete();
                 if (this.conversationState.endDialog) {
                     await this.previousIntent.set(context, { intentName: null });
-                    await this.sendSuggestedActions(context);
+                    await this.sendIntroCard(context);
                 }
                 break;
                 case 'Feedback':
@@ -124,7 +164,7 @@ class NiVA extends ActivityHandler {
                     this.conversationState.endDialog = await this.feebackDialog.isDialogComplete();
                     if (this.conversationState.endDialog) {
                         await this.previousIntent.set(context, { intentName: null });
-                        await this.sendSuggestedActions(context);
+                        await this.sendIntroCard(context);
                     }
                     break;
                 case 'Create_Terminal':
@@ -135,7 +175,7 @@ class NiVA extends ActivityHandler {
                     this.conversationState.endDialog = await this.CreateTerminalDialog.isDialogComplete();
                     if (this.conversationState.endDialog) {
                         await this.previousIntent.set(context, { intentName: null });
-                        await this.sendSuggestedActions(context);
+                        await this.sendIntroCard(context);
                     }
                     break;
                 case 'Question':
@@ -144,6 +184,8 @@ class NiVA extends ActivityHandler {
                     await context.sendActivity('Please type your question.');
                     await this.previousIntent.set(context, { intentName: null });
                     break;
+                case 'Find_Incident':
+                    console.log("Inside  <Find_Incident> Intent");
         }
     }
 
