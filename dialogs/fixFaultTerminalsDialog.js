@@ -66,18 +66,18 @@ class FixFaultTerminalsDialog extends ComponentDialog {
             // Running a prompt here means the next WaterfallStep will be run when the user's response is received.
             await step.context.sendActivity('I see that you are from PNC, Paris, Central Zone.');
             return await step.prompt(CHOICE_PROMPT, {
-                prompt: 'Here are some of your ATMs that needs immediate attention!',
+                prompt: 'Here are some of your ATMs that needs immediate attention:',
                 choices: ChoiceFactory.toChoices(['Paris Central 2613', 'Paris Downtown 2231', 'Paris Rivera 3234', 'Paris Airport 4234'])
             });
         } else {
-            await step.context.sendActivity(`I see there's a Cash Dispenser issue with your ${step.values.terminal}`);
+            await step.context.sendActivity(`I see there is a Cash Dispenser issue with your ${step.values.terminal}`);
             return await step.prompt(CONFIRM_PROMPT, 'Do you want any assistance in fixing it from my side?', ['Yes', 'No']);
         }
     }
 
     async selectTerminalStep(step) {
         step.values.terminal = step.result.value;
-        await step.context.sendActivity(`I see there's a Cash Dispenser issue with your ${step.values.terminal}`);
+        await step.context.sendActivity(`I see there is a Cash Dispenser issue with your ${step.values.terminal}`);
         if (step.result) {
             await step.context.sendActivity({ attachments: [this.createVideoCard()] });
             await step.context.sendActivity({ attachments: [this.createThumbnailCard()]});
@@ -98,7 +98,7 @@ class FixFaultTerminalsDialog extends ComponentDialog {
 
     async getSupportStep(step) {
         if (step.result) {
-            await step.context.sendActivity(`Connecting to the live agent..`);
+            await step.context.sendActivity('Connecting to the live agent');
             await delay(5000);
             await step.context.sendActivity('All support executives are busy at the moment!');
             await step.context.sendActivity('I have created a support request for you - #REQ1232445');

@@ -121,7 +121,7 @@ class NiVA extends ActivityHandler {
     async sendSuggestedActions(context) {
         context.sendActivity('Is there anything I can help?');
         const card = CardFactory.heroCard(
-            'Try these..',
+            'Here are few suggestions to begin with',
             [],
             [{
                 type: ActionTypes.ImBack,
@@ -171,6 +171,7 @@ class NiVA extends ActivityHandler {
             currentIntent = intent;
         } else if (intent == 'None' && !previousIntent.intentName) {
             await this.processFromKnowledgeBase(context);
+            this.sendSuggestedActions(context);
         } else {
             currentIntent = intent;
             await this.previousIntent.set(context, { intentName: intent });
