@@ -8,6 +8,8 @@ const {
     WaterfallDialog
 } = require('botbuilder-dialogs');
 
+const {CardFactory} = require('botbuilder');
+
 const CHOICE_PROMPT = 'CHOICE_PROMPT';
 const CONFIRM_PROMPT = 'CONFIRM_PROMPT';
 const WATERFALL_DIALOG = 'WATERFALL_DIALOG';
@@ -62,28 +64,36 @@ class FixFaultTerminalsDialog extends ComponentDialog {
         if (step.values.terminal==undefined) {
             // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is a Prompt Dialog.
             // Running a prompt here means the next WaterfallStep will be run when the user's response is received.
-            await step.context.sendActivity('I see that you are from PNC,Paris,Central Zone');
+            await step.context.sendActivity('I see that you are from PNC, Paris, Central Zone.');
             return await step.prompt(CHOICE_PROMPT, {
-                prompt: 'Here are some of your ATMs',
+                prompt: 'Here are some of your ATMs that needs attention..',
                 choices: ChoiceFactory.toChoices(['Terminal 2613', 'Terminal 2231', 'Terminal 3234', 'Terminal 4234'])
             });
         } else {
-            return await step.context.sendActivity(`I see an issue with your ${step.values.terminal}`)
+            await step.context.sendActivity(`I see there's a Cash Dispenser issue with your ${step.values.terminal}`)
+            return await step.prompt(CONFIRM_PROMPT, 'Do you want any help in fixing it?', ['Yes', 'No']);
         }
     }
 
     async selectTerminalStep(step) {
         step.values.terminal = step.result.value;
-        await step.context.sendActivity(`Here is how you can fix ${step.values.terminal}`);
-        await step.context.sendActivity('Please go through this article');
-        var link = 'https://study.com/articles/ATM_Repair_Course_and_Training_Information.html';
-        await step.context.sendActivity(link)
-        return await step.prompt(CONFIRM_PROMPT, 'Let me know if the above article helped.', ['Yes', 'No']);
+        // await step.context.sendActivity(`Here is how you can fix ${step.values.terminal}`);
+        // await step.context.sendActivity('Please go through this article');
+        // var link = 'https://study.com/articles/ATM_Repair_Course_and_Training_Information.html';
+        // await step.context.sendActivity(link)
+        if (step.result) {
+            await step.context.sendActivity({ attachments: [this.createThumbnailCard()] });
+        }
+        if (step.values.terminal == 'Terminal 2613'){
+            await step.context.sendActivity({ attachments: [this.createThumbnailCard()] });
+        } else  {
+            await step.context.sendActivity({ attachments: [this.createVideoCard()] });
+        }
+        return await step.prompt(CONFIRM_PROMPT, 'Let me know if the this helped you.', ['Yes', 'No']);
     }
 
     async terminalHelpStep(step) {
         if (!step.result) {
-            // await step.context.sendActivity("Do you want to connecto to our support team")
             return step.prompt(CONFIRM_PROMPT, 'Do you want to connect to our support team? ', ['Yes', 'No']);
         }
         else {
@@ -124,6 +134,38 @@ class FixFaultTerminalsDialog extends ComponentDialog {
 
     async isDialogComplete() {
         return endDialog;
+    }
+
+    createThumbnailCard() {
+        return CardFactory.thumbnailCard(
+            'How to fix cash dispenser jam',
+            [{ url: 'https://niva.blob.core.windows.net/public/Screenshot (19).png' }],
+            [{
+                type: 'openUrl',
+                title: 'Get More Info',
+                value: 'https://study.com/articles/ATM_Repair_Course_and_Training_Information.html'
+            }],
+            {
+                subtitle: 'A quick way to fix jammed cash dispenser',
+                text: 'Follow these steps that can fix jammed cash dispenser. Learn more about the variety of CS Series cash dispensers that NCR has to offer.'
+            }
+        );
+    }
+
+    createVideoCard() {
+        return CardFactory.videoCard(
+            'How to fix Malfunctioning Cash Dispenser',
+            [{ url: 'https://niva.blob.core.windows.net/public/SR_close_sep.wmv' }],
+            [{
+                type: 'openUrl',
+                title: 'Find More',
+                value: 'https://niva.blob.core.windows.net/public/SR_jam_S12.wmv'
+            }],
+            {
+                subtitle: 'by NCR',
+                text: 'When you insert your card, the ATM scans your card to get the information it needs. Then it tells the cassettes (money boxes) inside how much money to send out'
+            }
+        );
     }
 }
 
