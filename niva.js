@@ -77,42 +77,82 @@ class NiVA extends ActivityHandler {
         }
     }
 
-    async sendSuggestedActions(context) {
+    async sendIntroCard(context) {
         const card = CardFactory.heroCard(
             'How may I enlighten your day with?',
             [],
-            [
-                {
-                    type: ActionTypes.ImBack,
-                    title: 'Fix Terminal Faults',
-                    value: 'Fix Terminal Faults'
-                },
-                {
-                    type: ActionTypes.ImBack,
-                    title: 'Create a new Terminal',
-                    value: 'Create a new Terminal'
-                },
-                ,
-                {
-                    type: ActionTypes.ImBack,
-                    title: 'Create Incident',
-                    value: 'Create Incident'
-                },
-                {
-                    type: ActionTypes.ImBack,
-                    title: 'Incident Management Support',
-                    value: 'Incident Management Support'
-                },
-                {
-                    type: ActionTypes.ImBack,
-                    title: 'I have some Questions',
-                    value: 'I have some Questions'
-                },
-                {
-                    type: ActionTypes.ImBack,
-                    title: 'I have some Feedback',
-                    value: 'I have some Feedback'
-                }
+            [{
+                type: ActionTypes.ImBack,
+                title: 'Create Incident',
+                value: 'Create Incident'
+            },
+            {
+                type: ActionTypes.ImBack,
+                title: 'Fix Terminal Faults',
+                value: 'Fix Terminal Faults'
+            },
+            {
+                type: ActionTypes.ImBack,
+                title: 'Create a new Terminal',
+                value: 'Create a new Terminal'
+            },
+            {
+                type: ActionTypes.ImBack,
+                title: 'Incident Management Support',
+                value: 'Incident Management Support'
+            },
+            {
+                type: ActionTypes.ImBack,
+                title: 'I have some Questions',
+                value: 'I have some Questions'
+            },
+            {
+                type: ActionTypes.ImBack,
+                title: 'I have some Feedback',
+                value: 'I have some Feedback'
+            }
+
+            ]
+        );
+
+        await context.sendActivity({ attachments: [card] });
+    }
+
+    async sendSuggestedActions(context) {
+        context.sendActivity('Is there anything I can help?');
+        const card = CardFactory.heroCard(
+            'Try these..',
+            [],
+            [{
+                type: ActionTypes.ImBack,
+                title: 'Create Incident',
+                value: 'Create Incident'
+            },
+            {
+                type: ActionTypes.ImBack,
+                title: 'Fix Terminal Faults',
+                value: 'Fix Terminal Faults'
+            },
+            {
+                type: ActionTypes.ImBack,
+                title: 'Create a new Terminal',
+                value: 'Create a new Terminal'
+            },
+            {
+                type: ActionTypes.ImBack,
+                title: 'Incident Management Support',
+                value: 'Incident Management Support'
+            },
+            {
+                type: ActionTypes.ImBack,
+                title: 'I have some Questions',
+                value: 'I have some Questions'
+            },
+            {
+                type: ActionTypes.ImBack,
+                title: 'I have some Feedback',
+                value: 'I have some Feedback'
+            }
 
             ]
         );
@@ -211,19 +251,19 @@ class NiVA extends ActivityHandler {
                 // var terminalType = entities.Terminal[0][0] ? entities.Terminal[0][0] : null;
                 console.log(terminalType);
                 if (terminalType == 'Out of Service') {
-                    await context.sendActivity('Fetching the details..');
+                    await context.sendActivity('Fetching all Out of Service terminal details..');
                     await context.sendActivity({ attachments: [this.getOutOfServiceTerminals()] });
                 } else if (terminalType == 'In service') {
-                    await context.sendActivity('Fetching the details..');
+                    await context.sendActivity('Fetching all In-Service terminal details..');
                     await context.sendActivity({ attachments: [this.getInserviceTerminals()] });
                 } else if (terminalType == 'Needs Attention') {
-                    await context.sendActivity('Fetching the details..');
+                    await context.sendActivity('Fetching all Needs Attention terminal details..');
                     await context.sendActivity({ attachments: [this.getNeedsAttentionTerminals()] });
                 } else if (terminalType == 'Lost Communication') {
-                    await context.sendActivity('Fetching the details..');
+                    await context.sendActivity('Fetching all Lost Communication details..');
                     await context.sendActivity({ attachments: [this.getLostCommunicationTerminals()] });
                 } else {
-                    await context.sendActivity('Fetching the details..');
+                    await context.sendActivity('Fetching all terminal details..');
                     await context.sendActivity({ attachments: [this.getAllTerminals()] });
                 }
                 await this.previousIntent.set(context, { intentName: null });
@@ -231,7 +271,7 @@ class NiVA extends ActivityHandler {
                 break;
             case 'Find_Incident':
                 console.log("Inside <Find Incident> intent");
-                await context.sendActivity('Fetching the details..');
+                await context.sendActivity('Fetching all the open incidents..');
                 await context.sendActivity({ attachments: [this.getAllOpenTickets()] });
                 await this.previousIntent.set(context, { intentName: null });
                 await this.sendSuggestedActions(context);
