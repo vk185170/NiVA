@@ -171,7 +171,6 @@ class NiVA extends ActivityHandler {
             currentIntent = intent;
         } else if (intent == 'None' && !previousIntent.intentName) {
             await this.processFromKnowledgeBase(context);
-            this.sendSuggestedActions(context);
         } else {
             currentIntent = intent;
             await this.previousIntent.set(context, { intentName: intent });
