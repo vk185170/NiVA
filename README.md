@@ -1,6 +1,6 @@
 # NiVA
 
-NCR interactive Virtual Assistant
+NCR interactive Virtual Assistant(NiVA)
 
 This bot has been created using [Bot Framework](https://dev.botframework.com), it shows how to create a simple bot that accepts input from the user and echoes it back.
 
